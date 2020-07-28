@@ -2,6 +2,7 @@
 #include <linux/miscdevice.h>
 #include <linux/fs.h>
 #include <asm/uaccess.h>
+#include <linux/time.h>
 
 #define BUF_SIZE 200
 
@@ -17,6 +18,7 @@ static char *read_ptr;
 static char *write_ptr;
 static unsigned int read_count = 0;
 static unsigned int write_count = 0;
+static struct timespec last_write;
 
 static int device_open(struct inode *inode, struct file *file)
 {
@@ -64,6 +66,7 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 
   printk("device_write called \n");
   write_count++;
+  last_write = CURRENT_TIME;
 
   for(i = 0; i < len; i++) {
     get_user(*write_ptr, buff++);
@@ -77,6 +80,25 @@ device_write(struct file *filp, const char *buff, size_t len, loff_t * off)
 }
 
 static ssize_t
+device_fill(struct file *filp, const char *ch)
+{
+  int i = 0;
+
+  printk("device_fill called \n");
+
+  printk("Writing %d x %c \n", BUF_SIZE, *ch);
+
+  write_ptr = buf;
+  for (i = 0; i < BUF_SIZE; i++)
+  {
+      get_user(*write_ptr, ch);
+      write_ptr++;
+  }
+
+  return BUF_SIZE;
+}
+
+static ssize_t
 device_ioctl(
     /* struct inode *inode, */
     struct file *file,
@@ -84,40 +106,34 @@ device_ioctl(
     unsigned long ioctl_param
 )
 {
-    int i = 0;
-    char *tmp;
+  char *tmp;
 
-    switch (ioctl_num)
-    {
-        case CMD_ZERO_CONTENT:
-            break;
-        case CMD_POLL:
-            break;
-        case CMD_WRITE_TS:
-            break;
-        case CMD_GET_READN:
-            return (ssize_t) read_count;
-            break;
-        case CMD_GET_WRITEN:
-            return (ssize_t) write_count;
-            break;
-        case CMD_SET_BUFFER_CHAR:
-            /* Get the parameter given to ioctl by the process */
-            tmp = (char *)ioctl_param;
-            printk("Writing %d x %c \n", BUF_SIZE, *write_ptr);
-            write_ptr = buf;
-            for (i = 0; i < BUF_SIZE; i++)
-            {
-                get_user(*write_ptr, tmp);
-                write_ptr++;
-            }
+  switch (ioctl_num)
+  {
+    case CMD_ZERO_CONTENT:
+      *tmp = '0';
+      device_fill(file, tmp);
+      break;
+    case CMD_POLL:
+      // Not sure?
+      break;
+    case CMD_WRITE_TS:
+      return last_write.tv_sec;
+    case CMD_GET_READN:
+      return (ssize_t) read_count;
+    case CMD_GET_WRITEN:
+      return (ssize_t) write_count;
+    case CMD_SET_BUFFER_CHAR:
+      /* Get the parameter given to ioctl by the process */
+      tmp = (char *)ioctl_param;
+      device_fill(file, tmp);
 
-            break;
-        default:
-            break;
-    }
+      break;
+    default:
+      break;
+  }
 
-    return 0;
+  return 0;
 }
 
 static struct file_operations fops = {
@@ -155,3 +171,5 @@ void circ_char_exit(void)
 
 module_init(circ_char_enter);
 module_exit(circ_char_exit);
+
+// vim: set ts=2 sw=2 tw=0 et :

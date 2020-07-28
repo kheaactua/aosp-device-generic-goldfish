@@ -5,3 +5,4 @@
 /proc                     0666   system     system
 /dev/goldfish_sync        0666   system     system
 /dev/goldfish_address_space 0666 system     system
+/dev/circchar             0666   system     system

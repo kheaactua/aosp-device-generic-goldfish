@@ -18,20 +18,25 @@
 #  define D(...)   ((void)0)
 #endif
 
-int fp = 0;
+// Global file pointer
+int fd = 0;
 
 int opersyshw__read(char* buffer, int length)
 {
     D("OPERSYS HW - read()for %d bytes called", length);
 
-    return read(fp, buffer, length);
+    int sz = read(fd, buffer, length);
+
+    return sz;
 }
 
 int opersyshw__write(char* buffer, int length)
 {
     D("OPERSYS HW - write()for %d bytes called", length);
 
-    return write(fp, buffer, length);
+    int sz = write(fd, buffer, length);
+
+    return sz;
 }
 
 int opersyshw__test(int value)
@@ -54,7 +59,9 @@ static int open_opersyshw(const struct hw_module_t* module, char const* name,
 
     *device = (struct hw_device_t*) dev;
 
-    fp = open("/dev/circchar", O_RDWR);
+    // Global
+    D("OPERSYS Opening /dev/circchar in rw");
+    fd = open("/dev/circchar", O_RDWR);
 
     D("OPERSYS HW has been initialized");
 
