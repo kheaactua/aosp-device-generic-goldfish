@@ -6,12 +6,15 @@
 
 #define BUF_SIZE 200
 
-#define CMD_ZERO_CONTENT 1
-#define CMD_POLL 2
-#define CMD_WRITE_TS 3
-#define CMD_GET_READN 4
-#define CMD_GET_WRITEN 5
-#define CMD_SET_BUFFER_CHAR 6
+// Duplicated in opersyshw.c
+#define CMD_BASE                  0x12341
+#define CMD_ZERO_CONTENT          CMD_BASE + 0
+#define CMD_IS_THERE_CONTENT      CMD_BASE + 1
+#define CMD_WRITE_TS              CMD_BASE + 2
+#define CMD_GET_READN             CMD_BASE + 3
+#define CMD_GET_WRITEN            CMD_BASE + 4
+#define CMD_SET_BUFFER_CHAR       CMD_BASE + 5
+
 
 static char buf[BUF_SIZE];
 static char *read_ptr;
@@ -100,22 +103,20 @@ device_fill(struct file *filp, const char *ch)
 
 static ssize_t
 device_ioctl(
-    /* struct inode *inode, */
     struct file *file,
-    unsigned int ioctl_num,
-    unsigned long ioctl_param
+    unsigned int cmd,
+    unsigned long arg
 )
 {
   char *tmp;
 
-  switch (ioctl_num)
+  switch (cmd)
   {
     case CMD_ZERO_CONTENT:
-      *tmp = '0';
-      device_fill(file, tmp);
+      read_ptr = write_ptr;
       break;
-    case CMD_POLL:
-      // Not sure?
+    case CMD_IS_THERE_CONTENT:
+      return (read_ptr != write_ptr);
       break;
     case CMD_WRITE_TS:
       return last_write.tv_sec;

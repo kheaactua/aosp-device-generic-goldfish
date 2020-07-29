@@ -18,9 +18,14 @@
 #  define D(...)   ((void)0)
 #endif
 
+// Duplicated in circular-char.c
 #define CMD_BASE                  0x12341
 #define CMD_ZERO_CONTENT          CMD_BASE + 0
 #define CMD_IS_THERE_CONTENT      CMD_BASE + 1
+#define CMD_WRITE_TS              CMD_BASE + 2
+#define CMD_GET_READN             CMD_BASE + 3
+#define CMD_GET_WRITEN            CMD_BASE + 4
+#define CMD_SET_BUFFER_CHAR       CMD_BASE + 5
 
 // Global file pointer
 int fd = 0;
@@ -58,6 +63,26 @@ int opersyshw__is_there_content()
     return ioctl(fd, CMD_IS_THERE_CONTENT);
 }
 
+long opersyshw__write_ts()
+{
+    return ioctl(fd, CMD_WRITE_TS);
+}
+
+long opersyshw__get_read_n()
+{
+    return ioctl(fd, CMD_GET_READN);
+}
+
+long opersyshw__get_write_n()
+{
+    return ioctl(fd, CMD_GET_WRITEN);
+}
+
+long opersyshw__set_buffer_char(char ch)
+{
+    return ioctl(fd, CMD_SET_BUFFER_CHAR, ch);
+}
+
 static int open_opersyshw(const struct hw_module_t* module, char const* name,
         struct hw_device_t** device)
 {
@@ -71,7 +96,11 @@ static int open_opersyshw(const struct hw_module_t* module, char const* name,
     dev->write             = opersyshw__write;
     dev->test              = opersyshw__test;
     dev->zero_content      = opersyshw__zero_content;
-    devi->is_there_content = opersyshw__is_there_content;
+    dev->is_there_content  = opersyshw__is_there_content;
+    dev->write_ts          = opersyshw__write_ts;
+    dev->get_read_n        = opersyshw__get_read_n;
+    dev->get_write_n       = opersyshw__get_write_n;
+    dev->set_buffer_char   = opersyshw__set_buffer_char;
 
     *device = (struct hw_device_t*) dev;
 
