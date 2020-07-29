@@ -18,6 +18,10 @@
 #  define D(...)   ((void)0)
 #endif
 
+#define CMD_BASE                  0x12341
+#define CMD_ZERO_CONTENT          CMD_BASE + 0
+#define CMD_IS_THERE_CONTENT      CMD_BASE + 1
+
 // Global file pointer
 int fd = 0;
 
@@ -44,18 +48,30 @@ int opersyshw__test(int value)
     return value;
 }
 
+void opersyshw__zero_content()
+{
+    ioctl(fd, CMD_ZERO_CONTENT, 0);
+}
+
+int opersyshw__is_there_content()
+{
+    return ioctl(fd, CMD_IS_THERE_CONTENT);
+}
+
 static int open_opersyshw(const struct hw_module_t* module, char const* name,
         struct hw_device_t** device)
 {
     opersyshw_device_t *dev = malloc(sizeof(opersyshw_device_t));
     memset(dev, 0, sizeof(*dev));
 
-    dev->common.tag = HARDWARE_DEVICE_TAG;
-    dev->common.version = 0;
-    dev->common.module = (struct hw_module_t*)module;
-    dev->read = opersyshw__read;
-    dev->write = opersyshw__write;
-    dev->test = opersyshw__test;
+    dev->common.tag        = HARDWARE_DEVICE_TAG;
+    dev->common.version    = 0;
+    dev->common.module     = (struct hw_module_t*)module;
+    dev->read              = opersyshw__read;
+    dev->write             = opersyshw__write;
+    dev->test              = opersyshw__test;
+    dev->zero_content      = opersyshw__zero_content;
+    devi->is_there_content = opersyshw__is_there_content;
 
     *device = (struct hw_device_t*) dev;
 
